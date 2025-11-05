@@ -15,3 +15,10 @@ The server validates these at startup. You can also export them in your shell in
 
 to test the api 
 uvicorn main:app --reload
+
+
+TO RUN THE frontend
+pnpm run dev
+
+for backend 
+uvicorn main:app --reload
