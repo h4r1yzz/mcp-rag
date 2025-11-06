@@ -8,7 +8,7 @@ import ChatPane from "./ChatPane"
 import GhostIconButton from "./GhostIconButton"
 import ThemeToggle from "./ThemeToggle"
 import { INITIAL_CONVERSATIONS, INITIAL_TEMPLATES, INITIAL_FOLDERS } from "./mockData"
-import { askQuestion } from "../lib/api"
+import { askQuestion, streamGroq } from "../lib/api"
 
 export default function AIAssistantUI() {
   const [theme, setTheme] = useState(() => {
@@ -179,15 +179,15 @@ export default function AIAssistantUI() {
 
     const currentConvId = convId
     try {
-      const res = await askQuestion(content)
-      const answer = typeof res?.response === "string" ? res.response : JSON.stringify(res)
+      // Create a placeholder assistant message to stream into
+      const assistantId = Math.random().toString(36).slice(2)
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id !== currentConvId) return c
           const asstMsg = {
-            id: Math.random().toString(36).slice(2),
+            id: assistantId,
             role: "assistant",
-            content: answer,
+            content: "",
             createdAt: new Date().toISOString(),
           }
           const msgs = [...(c.messages || []), asstMsg]
@@ -200,6 +200,25 @@ export default function AIAssistantUI() {
           }
         }),
       )
+
+      await streamGroq(content, (chunk) => {
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id !== currentConvId) return c
+            const msgs = (c.messages || []).map((m) =>
+              m.id === assistantId ? { ...m, content: (m.content || "") + chunk } : m,
+            )
+            const last = msgs[msgs.length - 1]
+            return {
+              ...c,
+              messages: msgs,
+              updatedAt: new Date().toISOString(),
+              messageCount: msgs.length,
+              preview: (last?.content || c.preview).slice(0, 80),
+            }
+          }),
+        )
+      })
     } catch (e) {
       const err = e instanceof Error ? e.message : String(e)
       setConversations((prev) =>

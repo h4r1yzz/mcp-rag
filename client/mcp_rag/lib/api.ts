@@ -37,3 +37,25 @@ export async function uploadPdfs(files: File[] | FileList): Promise<{ messages: 
 }
 
 
+export async function streamGroq(
+  question: string,
+  onToken: (chunk: string) => void,
+): Promise<void> {
+  const fd = new FormData()
+  fd.append("question", question)
+  const res = await fetch(`${API_BASE}/groq_stream/`, { method: "POST", body: fd })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || res.statusText)
+  }
+  const reader = res.body?.getReader()
+  if (!reader) return
+  const decoder = new TextDecoder()
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    const chunk = decoder.decode(value)
+    if (chunk) onToken(chunk)
+  }
+}
+
