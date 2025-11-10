@@ -218,7 +218,7 @@ export default function AIAssistantUI() {
             }
           }),
         )
-      })
+      }, currentConvId)
     } catch (e) {
       const err = e instanceof Error ? e.message : String(e)
       setConversations((prev) =>

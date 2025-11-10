@@ -40,9 +40,13 @@ export async function uploadPdfs(files: File[] | FileList): Promise<{ messages: 
 export async function streamGroq(
   question: string,
   onToken: (chunk: string) => void,
+  threadId?: string,
 ): Promise<void> {
   const fd = new FormData()
   fd.append("question", question)
+  if (threadId) {
+    fd.append("thread_id", threadId)
+  }
   const res = await fetch(`${API_BASE}/groq_stream/`, { method: "POST", body: fd })
   if (!res.ok) {
     const text = await res.text()

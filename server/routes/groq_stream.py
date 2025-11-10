@@ -1,55 +1,97 @@
 from fastapi import APIRouter, Form
 from fastapi.responses import StreamingResponse
 from logger import logger
-from groq import Groq
+from langchain_groq import ChatGroq
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 import time
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from typing import Optional, Dict, List
+from threading import Lock
 
-# Load .env from project root (parent directory)
 env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
-# Also try loading from current directory as fallback
 load_dotenv()
 
 router = APIRouter()
 
-# Adjust this value to control streaming speed (in seconds)
-# Higher values = slower streaming
 STREAM_DELAY = 0.05  # 50ms delay between chunks
+
+conversation_memory: Dict[str, List] = {}
+memory_lock = Lock()
+
+# LLM instance - will be initialized once
+_llm = None
+
+def get_llm():
+    """Get or create the LLM instance."""
+    global _llm
+    if _llm is None:
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        if not groq_api_key:
+            raise ValueError("GROQ_API_KEY not found in environment variables")
+        
+        _llm = ChatGroq(
+            groq_api_key=groq_api_key,
+            model_name="llama-3.3-70b-versatile",
+            temperature=0.5,
+            streaming=True,  # Enable streaming
+        )
+    
+    return _llm
 
 
 @router.post("/groq_stream/")
-async def groq_stream(question: str = Form(...)):
-    """Stream completion tokens from Groq for a simple chat prompt."""
-    logger.info("groq_stream request received")
-
+async def groq_stream(
+    question: str = Form(...),
+    thread_id: Optional[str] = Form(None)
+):
+    logger.info(f"groq_stream request received - thread_id: {thread_id}")
+    
+    # Use default thread_id if not provided
+    if not thread_id:
+        thread_id = "default"
+    
     def token_generator():
-        groq_api_key = os.getenv("GROQ_API_KEY")
-        if not groq_api_key:
-            logger.error("GROQ_API_KEY not found in environment variables")
-            yield "Error: GROQ_API_KEY not configured. Please check your .env file."
-            return
-        
-        client = Groq(api_key=groq_api_key)
-        stream = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": question},
-            ],
-            model="llama-3.3-70b-versatile",
-            temperature=0.5,
-            max_completion_tokens=1024,
-            top_p=1,
-            stop=None,
-            stream=True,
-        )
-        for chunk in stream:
-            delta = getattr(chunk.choices[0], "delta", None)
-            if delta and getattr(delta, "content", None):
-                yield delta.content
-                time.sleep(STREAM_DELAY)  # Delay between chunks to slow down streaming
+        try:
+            llm = get_llm()
+            
+            # Get conversation history for this thread_id (short-term memory)
+            with memory_lock:
+                if thread_id not in conversation_memory:
+                    # Initialize with system message
+                    conversation_memory[thread_id] = [
+                        SystemMessage(content="You are a helpful assistant.")
+                    ]
+                
+                messages = list(conversation_memory[thread_id])
+            
+            # Add the new user message
+            messages.append(HumanMessage(content=question))
+            
+            # Stream the response token by token
+            full_response = ""
+            for chunk in llm.stream(messages):
+                if hasattr(chunk, "content") and chunk.content:
+                    content = chunk.content
+                    full_response += content
+                    yield content
+                    time.sleep(STREAM_DELAY)
+            
+            # Add both user message and AI response
+            with memory_lock:
+                if thread_id not in conversation_memory:
+                    conversation_memory[thread_id] = [
+                        SystemMessage(content="You are a helpful assistant.")
+                    ]
+                conversation_memory[thread_id].append(HumanMessage(content=question))
+                conversation_memory[thread_id].append(AIMessage(content=full_response))
+            
+        except Exception as e:
+            logger.exception("Error in groq_stream")
+            error_msg = f"Error: {str(e)}"
+            yield error_msg
 
     return StreamingResponse(token_generator(), media_type="text/plain")
 
