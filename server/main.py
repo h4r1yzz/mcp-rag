@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from middlewares.exception_handlers import catch_exceptions_middleware
 from routes.upload_pdfs import router as upload_router
 from routes.ask_question import router as ask_router
+from routes.groq_stream import router as groq_stream_router
 
 
 
@@ -28,3 +29,5 @@ app.middleware("http")(catch_exceptions_middleware)
 app.include_router(upload_router)
 # 2. asking query
 app.include_router(ask_router)
+# 3. groq streaming
+app.include_router(groq_stream_router)

@@ -3,6 +3,15 @@ from fastapi.responses import StreamingResponse
 from logger import logger
 from groq import Groq
 import time
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env from project root (parent directory)
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
+# Also try loading from current directory as fallback
+load_dotenv()
 
 router = APIRouter()
 
@@ -17,7 +26,13 @@ async def groq_stream(question: str = Form(...)):
     logger.info("groq_stream request received")
 
     def token_generator():
-        client = Groq()
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        if not groq_api_key:
+            logger.error("GROQ_API_KEY not found in environment variables")
+            yield "Error: GROQ_API_KEY not configured. Please check your .env file."
+            return
+        
+        client = Groq(api_key=groq_api_key)
         stream = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
