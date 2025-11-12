@@ -1,8 +1,13 @@
 # AI Medical Clinic Assistant - RAG Chatbot
 
-A full-stack AI-powered chatbot application for medical clinic FAQs, built with **Retrieval-Augmented Generation (RAG)** using LangChain, Pinecone, and Groq LLM. Features a modern Next.js frontend with real-time streaming responses and conversation management.
+A full-stack AI-powered chatbot application for medical clinic FAQs, built with **Retrieval-Augmented Generation (RAG)** using LangChain, Pinecone, and Groq LLM.
+
+**Two deployment options:**
+- 🚀 **Flask App** (Production) - Unified single-container application with built-in UI
+- 💻 **Next.js + FastAPI** (Development) - Full-featured development setup
 
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![Flask](https://img.shields.io/badge/flask-3.0+-green.svg)
 ![Node](https://img.shields.io/badge/node-18+-green.svg)
 
 ---
@@ -17,6 +22,8 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 - [Installation](#-installation)
 - [Configuration](#-configuration)
 - [Running the Application](#-running-the-application)
+- [Docker Deployment](#-docker-deployment)
+- [CI/CD Deployment](#-cicd-deployment)
 - [Project Structure](#-project-structure)
 - [API Documentation](#-api-documentation)
 - [Knowledge Base](#-knowledge-base)
@@ -26,14 +33,22 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 
 ## ✨ Features
 
-### Backend (FastAPI + RAG)
+### Core RAG Capabilities
 - 🤖 **Retrieval-Augmented Generation (RAG)** - Accurate answers from clinic FAQ knowledge base
 - 🔍 **Semantic Search** - Pinecone vector database with Google Generative AI embeddings
 - 💬 **Streaming Responses** - Real-time LLM responses using Groq's Llama 3.3 70B
 - 🛡️ **Robust Error Handling** - Comprehensive exception handling and logging
 - ⚡ **Optimized Performance** - Singleton services, connection pooling, and caching
 
-### Frontend (Next.js + React)
+### Flask App (Production - Recommended)
+- 🎯 **Single Container Deployment** - Unified application serving both UI and API
+- 💬 **Chat Mode** - Conversational AI with context memory
+- ⚡ **Real-time Streaming** - Server-Sent Events (SSE) for live responses
+- 🎨 **Modern UI** - Clean, responsive chat interface with gradient design
+- 🐳 **Docker Ready** - Simple deployment with single Docker container
+- 🚀 **CI/CD Integrated** - GitHub Actions workflow for automated deployment
+
+### Next.js + FastAPI (Development - Optional)
 - 💬 **Multi-Conversation Management** - Create, switch, and manage multiple chat conversations
 - 📌 **Pin Important Chats** - Pin frequently used conversations for quick access
 - 🔄 **Auto-Save Conversations** - Automatic persistence to localStorage
@@ -63,6 +78,28 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 
 ## 🏗️ Architecture
 
+### Production (Flask App - Single Container)
+```
+┌─────────────────────────────┐
+│      Flask Application      │
+│  (UI + API on Port 8080)    │
+│                             │
+│  ┌──────────┐  ┌─────────┐ │
+│  │Templates │  │   API   │ │
+│  │  (HTML)  │  │Endpoints│ │
+│  └──────────┘  └─────────┘ │
+└──────────────┬──────────────┘
+               │
+    ┌──────────┴────┬──────────┬──────────┐
+    ▼               ▼          ▼          ▼
+┌────────┐      ┌─────┐    ┌──────┐  ┌──────┐
+│Pinecone│      │Groq │    │Google│  │ FAQ  │
+│Vector  │      │ LLM │    │Embed │  │ JSON │
+│  DB    │      │     │    │      │  │      │
+└────────┘      └─────┘    └──────┘  └──────┘
+```
+
+### Development (Next.js + FastAPI - Optional)
 ```
 ┌─────────────────┐
 │   Next.js UI    │
@@ -95,17 +132,20 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 
 ## 🛠️ Technology Stack
 
-### Backend
-- **Framework:** FastAPI (Python 3.11+)
+### Production Stack (Flask App)
+- **Framework:** Flask 3.0+ (Python 3.11+)
+- **UI:** HTML5, CSS3, Vanilla JavaScript
 - **LLM:** Groq (Llama 3.3 70B Versatile)
 - **Embeddings:** Google Generative AI (models/embedding-001, 768 dimensions)
-- **Vector Database:** Pinecone (serverless)
+- **Vector Database:** Pinecone (serverless, us-east-1)
 - **RAG Framework:** LangChain
 - **Configuration:** Pydantic Settings
 - **Logging:** Loguru
+- **Deployment:** Docker, GitHub Actions, AWS ECR/EC2
 
-### Frontend
-- **Framework:** Next.js 15.2 (React 19)
+### Development Stack (Next.js + FastAPI - Optional)
+- **Backend Framework:** FastAPI (Python 3.11+)
+- **Frontend Framework:** Next.js 15.2 (React 19)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4
 - **Animations:** Framer Motion
@@ -229,9 +269,34 @@ CLERK_SECRET_KEY=your_clerk_secret_key
 
 ## 🏃 Running the Application
 
-### Development Mode
+### Option 1: Flask App (Recommended - Simple & Fast)
 
-You'll need **two terminal windows** - one for backend, one for frontend.
+**Single terminal needed:**
+
+```bash
+cd server
+
+# Activate virtual environment if not already activated
+source venv/bin/activate  # macOS/Linux
+
+# Start Flask application
+python flask_app.py
+```
+
+**Expected output:**
+```
+ * Serving Flask app 'flask_app'
+ * Debug mode: on
+ * Running on http://0.0.0.0:3000
+```
+
+Application will be available at: **http://localhost:3000**
+
+---
+
+### Option 2: Next.js + FastAPI (Full Development Setup)
+
+**Two terminal windows needed:**
 
 #### Terminal 1: Start Backend Server
 
@@ -276,6 +341,43 @@ pnpm dev
 
 Frontend will be available at: **http://localhost:3000**
 
+**Features:**
+- ✅ Full Next.js development experience
+- ✅ Multi-conversation management
+- ✅ Pin/unpin conversations
+- ✅ Search functionality
+
+---
+
+### Flask App (Production)
+
+
+**Note:** The production Docker deployment uses port 8080 (while the development uses port 3000).
+
+---
+
+## 🚀 CI/CD Deployment
+
+Automated deployment to AWS EC2 using GitHub Actions.
+
+### Quick CI/CD Setup
+
+**Prerequisites:**
+- AWS account with ECR and EC2 access
+- EC2 instance configured as GitHub self-hosted runner
+- GitHub repository secrets configured
+
+**Workflow:**
+1. Push code to `main` or `master` branch (or trigger manually)
+2. GitHub Actions automatically builds Flask Docker image
+3. Image pushed to Amazon ECR
+4. Deployed to EC2 using `docker run`
+
+
+**Access your deployed app:**
+```
+http://YOUR_EC2_IP:8080
+```
 
 
 ---
@@ -284,13 +386,20 @@ Frontend will be available at: **http://localhost:3000**
 
 ```
 mcp-rag-chatbot/
-├── server/                          # Backend (FastAPI)
+├── server/                          # Backend
+│   ├── flask_app.py                 # 🚀 Flask application (PRODUCTION)
+│   ├── main.py                      # FastAPI application (development only)
 │   ├── config.py                    # Centralized configuration (Pydantic)
-│   ├── main.py                      # FastAPI application entry point
 │   ├── logger.py                    # Logging configuration
 │   ├── prompts.py                   # LLM prompt templates
 │   ├── requirements.txt             # Python dependencies
 │   ├── .env.example                 # Environment variables template
+│   │
+│   ├── templates/                   # Flask HTML templates
+│   │   └── index.html               # Chat interface UI
+│   │
+│   ├── static/                      # Flask static files
+│   │   └── chat.js                  # Chat JavaScript
 │   │
 │   ├── data/
 │   │   └── clinic_faqs.json         # FAQ knowledge base
@@ -299,7 +408,7 @@ mcp-rag-chatbot/
 │   │   ├── vectorstore_service.py   # Pinecone vector store
 │   │   └── llm_service.py           # LLM service factory
 │   │
-│   ├── routes/
+│   ├── routes/                      # FastAPI routes (development only)
 │   │   ├── ask_question.py          # POST /ask/ - RAG query endpoint
 │   │   └── groq_stream.py           # POST /groq_stream/ - Streaming endpoint
 │   │
@@ -308,14 +417,14 @@ mcp-rag-chatbot/
 │   │   ├── query_handlers.py        # Query processing logic
 │   │   └── load_vectorstore.py      # Vector store initialization
 │   │
-│   ├── middlewares/
+│   ├── middlewares/                 # FastAPI middleware (development only)
 │   │   └── exception_handlers.py    # Global exception handling
 │   │
 │   └── tests/
 │       ├── test_rag_retrieval.py    # RAG system tests
 │       └── test_results.json        # Test results
 │
-├── client/mcp_rag/                  # Frontend (Next.js)
+├── client/mcp_rag/                  # Frontend (Next.js - development only)
 │   ├── app/
 │   │   ├── layout.tsx               # Root layout with Clerk provider
 │   │   ├── page.tsx                 # Home page
@@ -339,18 +448,79 @@ mcp-rag-chatbot/
 │   ├── package.json                 # Node.js dependencies
 │   └── next.config.ts               # Next.js configuration
 │
+├── .github/
+│   └── workflows/
+│       └── deploy.yml               # GitHub Actions CI/CD workflow
+│
+├── Dockerfile                       # Docker configuration for Flask app
 ├── .gitignore                       # Git ignore rules
 └── README.md                        # This file
 ```
+
+**Key Files:**
+- 🚀 **`server/flask_app.py`** - Production Flask application (deployed)
+- 📄 **`server/templates/index.html`** - Chat UI template
+- 📜 **`server/static/chat.js`** - Client-side chat logic
+- 🐳 **`Dockerfile`** - Single container for Flask app
+- ⚙️ **`.github/workflows/deploy.yml`** - CI/CD pipeline
 
 ---
 
 ## 🔌 API Documentation
 
-### Base URL
+### Base URLs
+
+**Flask App (Production):**
+```
+Local: http://localhost:3000
+Production: http://YOUR_EC2_IP:8080
+```
+
+**FastAPI (Development):**
 ```
 http://localhost:8000
 ```
+
+### Endpoints
+
+#### Flask App Endpoints
+
+**GET /** - Chat Interface
+- Returns HTML chat interface
+- Access via browser
+
+**GET /health** - Health Check
+```bash
+curl http://localhost:3000/health
+```
+
+**POST /groq_stream** - Streaming Chat
+```bash
+curl -X POST "http://localhost:3000/groq_stream" \
+  -F "question=Tell me about your services" \
+  -F "thread_id=my-conversation"
+```
+- Returns: Server-Sent Events (SSE) stream
+- Parameters:
+  - `question` (required): User's question
+  - `thread_id` (optional): Conversation thread ID for context
+
+#### FastAPI Endpoints (Development Only)
+
+**POST /ask** - RAG Query
+```bash
+curl -X POST "http://localhost:8000/ask" \
+  -F "question=What are your hours?"
+```
+- Returns: JSON with response and sources
+
+**POST /groq_stream** - Streaming Chat
+```bash
+curl -X POST "http://localhost:8000/groq_stream" \
+  -F "question=Tell me about your services" \
+  -F "thread_id=my-conversation"
+```
+- Returns: Server-Sent Events (SSE) stream
 
 ---
 
