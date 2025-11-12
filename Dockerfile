@@ -16,7 +16,7 @@ COPY server/requirements.txt .
 # Upgrade pip and install Python dependencies
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
-    pip list | grep -E "flask|gunicorn"
+    pip list | grep flask
 
 # Copy server code
 COPY server/ .
