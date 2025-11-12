@@ -6,19 +6,13 @@ import {
   SearchIcon,
   Plus,
   Star,
-  Clock,
-  FolderIcon,
-  FileText,
   Settings,
   Asterisk,
+  MessageSquare,
 } from "lucide-react"
 import SidebarSection from "./SidebarSection"
 import ConversationRow from "./ConversationRow"
-import FolderRow from "./FolderRow"
-import TemplateRow from "./TemplateRow"
 import ThemeToggle from "./ThemeToggle"
-import CreateFolderModal from "./CreateFolderModal"
-import CreateTemplateModal from "./CreateTemplateModal"
 import SearchModal from "./SearchModal"
 import SettingsPopover from "./SettingsPopover"
 import { cls } from "./utils"
@@ -32,89 +26,21 @@ export default function Sidebar({
   setTheme,
   collapsed,
   setCollapsed,
-  conversations,
-  pinned,
-  recent,
-  folders,
-  folderCounts,
+  conversations = [],
+  pinned = [],
   selectedId,
   onSelect,
   togglePin,
   query,
   setQuery,
   searchRef,
-  createFolder,
   createNewChat,
-  templates = [],
-  setTemplates = () => {},
-  onUseTemplate = () => {},
   sidebarCollapsed = false,
   setSidebarCollapsed = () => {},
 }) {
-  const [showCreateFolderModal, setShowCreateFolderModal] = useState(false)
-  const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false)
-  const [editingTemplate, setEditingTemplate] = useState(null)
   const [showSearchModal, setShowSearchModal] = useState(false)
 
-  const getConversationsByFolder = (folderName) => {
-    return conversations.filter((conv) => conv.folder === folderName)
-  }
 
-  const handleCreateFolder = (folderName) => {
-    createFolder(folderName)
-  }
-
-  const handleDeleteFolder = (folderName) => {
-    const updatedConversations = conversations.map((conv) =>
-      conv.folder === folderName ? { ...conv, folder: null } : conv,
-    )
-    console.log("Delete folder:", folderName, "Updated conversations:", updatedConversations)
-  }
-
-  const handleRenameFolder = (oldName, newName) => {
-    const updatedConversations = conversations.map((conv) =>
-      conv.folder === oldName ? { ...conv, folder: newName } : conv,
-    )
-    console.log("Rename folder:", oldName, "to", newName, "Updated conversations:", updatedConversations)
-  }
-
-  const handleCreateTemplate = (templateData) => {
-    if (editingTemplate) {
-      const updatedTemplates = templates.map((t) =>
-        t.id === editingTemplate.id ? { ...templateData, id: editingTemplate.id } : t,
-      )
-      setTemplates(updatedTemplates)
-      setEditingTemplate(null)
-    } else {
-      const newTemplate = {
-        ...templateData,
-        id: Date.now().toString(),
-      }
-      setTemplates([...templates, newTemplate])
-    }
-    setShowCreateTemplateModal(false)
-  }
-
-  const handleEditTemplate = (template) => {
-    setEditingTemplate(template)
-    setShowCreateTemplateModal(true)
-  }
-
-  const handleRenameTemplate = (templateId, newName) => {
-    const updatedTemplates = templates.map((t) =>
-      t.id === templateId ? { ...t, name: newName, updatedAt: new Date().toISOString() } : t,
-    )
-    setTemplates(updatedTemplates)
-  }
-
-  const handleDeleteTemplate = (templateId) => {
-    const updatedTemplates = templates.filter((t) => t.id !== templateId)
-    setTemplates(updatedTemplates)
-  }
-
-  const handleUseTemplate = (template) => {
-    onUseTemplate(template)
-  }
 
   if (sidebarCollapsed) {
     return (
@@ -150,13 +76,6 @@ export default function Sidebar({
             title="Search"
           >
             <SearchIcon className="h-5 w-5" />
-          </button>
-
-          <button
-            className="rounded-xl p-2 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-zinc-800"
-            title="Folders"
-          >
-            <FolderIcon className="h-5 w-5" />
           </button>
 
           <div className="mt-auto mb-4">
@@ -260,18 +179,15 @@ export default function Sidebar({
             </div>
 
             <nav className="mt-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-2 pb-4">
-              <SidebarSection
-                icon={<Star className="h-4 w-4" />}
-                title="PINNED CHATS" // Renamed from "PINNED CONVERSATIONS" to "PINNED CHATS"
-                collapsed={collapsed.pinned}
-                onToggle={() => setCollapsed((s) => ({ ...s, pinned: !s.pinned }))}
-              >
-                {pinned.length === 0 ? (
-                  <div className="select-none rounded-lg border border-dashed border-zinc-200 px-3 py-3 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                    Pin important threads for quick access.
-                  </div>
-                ) : (
-                  pinned.map((c) => (
+              {/* Show Pinned Chats section only if there are pinned chats */}
+              {pinned.length > 0 && (
+                <SidebarSection
+                  icon={<Star className="h-4 w-4" />}
+                  title="PINNED CHATS"
+                  collapsed={collapsed.pinned}
+                  onToggle={() => setCollapsed((s) => ({ ...s, pinned: !s.pinned }))}
+                >
+                  {pinned.map((c) => (
                     <ConversationRow
                       key={c.id}
                       data={c}
@@ -279,95 +195,36 @@ export default function Sidebar({
                       onSelect={() => onSelect(c.id)}
                       onTogglePin={() => togglePin(c.id)}
                     />
-                  ))
-                )}
-              </SidebarSection>
+                  ))}
+                </SidebarSection>
+              )}
 
+              {/* All Chats section - shows all non-pinned conversations */}
               <SidebarSection
-                icon={<Clock className="h-4 w-4" />}
-                title="RECENT"
-                collapsed={collapsed.recent}
-                onToggle={() => setCollapsed((s) => ({ ...s, recent: !s.recent }))}
+                icon={<MessageSquare className="h-4 w-4" />}
+                title="ALL CHATS"
+                collapsed={collapsed.all}
+                onToggle={() => setCollapsed((s) => ({ ...s, all: !s.all }))}
               >
-                {recent.length === 0 ? (
+                {conversations.filter((c) => !c.pinned).length === 0 ? (
                   <div className="select-none rounded-lg border border-dashed border-zinc-200 px-3 py-3 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                    No conversations yet. Start a new one!
+                    No conversations yet. Start chatting!
                   </div>
                 ) : (
-                  recent.map((c) => (
-                    <ConversationRow
-                      key={c.id}
-                      data={c}
-                      active={c.id === selectedId}
-                      onSelect={() => onSelect(c.id)}
-                      onTogglePin={() => togglePin(c.id)}
-                      showMeta
-                    />
-                  ))
+                  conversations
+                    .filter((c) => !c.pinned)
+                    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+                    .map((c) => (
+                      <ConversationRow
+                        key={c.id}
+                        data={c}
+                        active={c.id === selectedId}
+                        onSelect={() => onSelect(c.id)}
+                        onTogglePin={() => togglePin(c.id)}
+                        showMeta
+                      />
+                    ))
                 )}
-              </SidebarSection>
-
-              <SidebarSection
-                icon={<FolderIcon className="h-4 w-4" />}
-                title="FOLDERS"
-                collapsed={collapsed.folders}
-                onToggle={() => setCollapsed((s) => ({ ...s, folders: !s.folders }))}
-              >
-                <div className="-mx-1">
-                  <button
-                    onClick={() => setShowCreateFolderModal(true)}
-                    className="mb-2 inline-flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  >
-                    <Plus className="h-4 w-4" /> Create folder
-                  </button>
-
-                  {folders.map((f) => (
-                    <FolderRow
-                      key={f.id}
-                      name={f.name}
-                      count={folderCounts[f.name] || 0}
-                      conversations={getConversationsByFolder(f.name)}
-                      selectedId={selectedId}
-                      onSelect={onSelect}
-                      togglePin={togglePin}
-                      onDeleteFolder={handleDeleteFolder}
-                      onRenameFolder={handleRenameFolder}
-                    />
-                  ))}
-                </div>
-              </SidebarSection>
-
-              <SidebarSection
-                icon={<FileText className="h-4 w-4" />} // Replaced StarOff with FileText for better template metaphor
-                title="TEMPLATES"
-                collapsed={collapsed.templates}
-                onToggle={() => setCollapsed((s) => ({ ...s, templates: !s.templates }))}
-              >
-                <div className="-mx-1">
-                  <button
-                    onClick={() => setShowCreateTemplateModal(true)}
-                    className="mb-2 inline-flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  >
-                    <Plus className="h-4 w-4" /> Create template
-                  </button>
-
-                  {(Array.isArray(templates) ? templates : []).map((template) => (
-                    <TemplateRow
-                      key={template.id}
-                      template={template}
-                      onUseTemplate={handleUseTemplate}
-                      onEditTemplate={handleEditTemplate}
-                      onRenameTemplate={handleRenameTemplate}
-                      onDeleteTemplate={handleDeleteTemplate}
-                    />
-                  ))}
-
-                  {(!templates || templates.length === 0) && (
-                    <div className="select-none rounded-lg border border-dashed border-zinc-200 px-3 py-3 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                      No templates yet. Create your first prompt template.
-                    </div>
-                  )}
-                </div>
               </SidebarSection>
             </nav>
 
@@ -411,22 +268,6 @@ export default function Sidebar({
           </motion.aside>
         )}
       </AnimatePresence>
-
-      <CreateFolderModal
-        isOpen={showCreateFolderModal}
-        onClose={() => setShowCreateFolderModal(false)}
-        onCreateFolder={handleCreateFolder}
-      />
-
-      <CreateTemplateModal
-        isOpen={showCreateTemplateModal}
-        onClose={() => {
-          setShowCreateTemplateModal(false)
-          setEditingTemplate(null)
-        }}
-        onCreateTemplate={handleCreateTemplate}
-        editingTemplate={editingTemplate}
-      />
 
       <SearchModal
         isOpen={showSearchModal}

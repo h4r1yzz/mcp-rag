@@ -7,7 +7,6 @@ import Header from "./Header"
 import ChatPane from "./ChatPane"
 import GhostIconButton from "./GhostIconButton"
 import ThemeToggle from "./ThemeToggle"
-import { INITIAL_CONVERSATIONS, INITIAL_TEMPLATES, INITIAL_FOLDERS } from "./mockData"
 import { askQuestion, streamGroq } from "../lib/api"
 
 export default function AIAssistantUI() {
@@ -46,9 +45,9 @@ export default function AIAssistantUI() {
   const [collapsed, setCollapsed] = useState(() => {
     try {
       const raw = localStorage.getItem("sidebar-collapsed")
-      return raw ? JSON.parse(raw) : { pinned: true, recent: false, folders: true, templates: true }
+      return raw ? JSON.parse(raw) : { pinned: false, all: false }
     } catch {
-      return { pinned: true, recent: false, folders: true, templates: true }
+      return { pinned: false, all: false }
     }
   })
   useEffect(() => {
@@ -72,10 +71,42 @@ export default function AIAssistantUI() {
     } catch {}
   }, [sidebarCollapsed])
 
-  const [conversations, setConversations] = useState(INITIAL_CONVERSATIONS)
-  const [selectedId, setSelectedId] = useState(null)
-  const [templates, setTemplates] = useState(INITIAL_TEMPLATES)
-  const [folders, setFolders] = useState(INITIAL_FOLDERS)
+  // Load conversations from localStorage on mount
+  const [conversations, setConversations] = useState(() => {
+    try {
+      const saved = localStorage.getItem("conversations")
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+
+  const [selectedId, setSelectedId] = useState(() => {
+    try {
+      const saved = localStorage.getItem("selectedChatId")
+      return saved || null
+    } catch {
+      return null
+    }
+  })
+
+  // Persist conversations to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem("conversations", JSON.stringify(conversations))
+    } catch {}
+  }, [conversations])
+
+  // Persist selected chat ID to localStorage
+  useEffect(() => {
+    try {
+      if (selectedId) {
+        localStorage.setItem("selectedChatId", selectedId)
+      } else {
+        localStorage.removeItem("selectedChatId")
+      }
+    } catch {}
+  }, [selectedId])
 
   const [query, setQuery] = useState("")
   const searchRef = useRef(null)
@@ -102,11 +133,21 @@ export default function AIAssistantUI() {
     return () => window.removeEventListener("keydown", onKey)
   }, [sidebarOpen, conversations])
 
+  // Auto-create a chat on first load if no conversations exist
   useEffect(() => {
-    if (!selectedId && conversations.length > 0) {
+    if (conversations.length === 0) {
+      // First time user - create initial chat
       createNewChat()
+    } else if (!selectedId) {
+      // Has conversations but none selected - select the most recent one
+      const mostRecent = conversations.sort((a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      )[0]
+      if (mostRecent) {
+        setSelectedId(mostRecent.id)
+      }
     }
-  }, [])
+  }, []) // Only run on mount
 
   const filtered = useMemo(() => {
     if (!query.trim()) return conversations
@@ -115,17 +156,6 @@ export default function AIAssistantUI() {
   }, [conversations, query])
 
   const pinned = filtered.filter((c) => c.pinned).sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
-
-  const recent = filtered
-    .filter((c) => !c.pinned)
-    .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
-    .slice(0, 10)
-
-  const folderCounts = React.useMemo(() => {
-    const map = Object.fromEntries(folders.map((f) => [f.name, 0]))
-    for (const c of conversations) if (map[c.folder] != null) map[c.folder] += 1
-    return map
-  }, [conversations, folders])
 
   function togglePin(id) {
     setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, pinned: !c.pinned } : c)))
@@ -140,19 +170,11 @@ export default function AIAssistantUI() {
       messageCount: 0,
       preview: "Say hello to start...",
       pinned: false,
-      folder: "Work Projects",
       messages: [], // Ensure messages array is empty for new chats
     }
     setConversations((prev) => [item, ...prev])
     setSelectedId(id)
     setSidebarOpen(false)
-  }
-
-  function createFolder() {
-    const name = prompt("Folder name")
-    if (!name) return
-    if (folders.some((f) => f.name.toLowerCase() === name.toLowerCase())) return alert("Folder already exists.")
-    setFolders((prev) => [...prev, { id: Math.random().toString(36).slice(2), name }])
   }
 
   async function sendMessage(convId, content) {
@@ -164,8 +186,13 @@ export default function AIAssistantUI() {
       prev.map((c) => {
         if (c.id !== convId) return c
         const msgs = [...(c.messages || []), userMsg]
+        // Update title to first message if it's still "New Chat"
+        const newTitle = c.title === "New Chat" && msgs.length === 1
+          ? content.slice(0, 50) + (content.length > 50 ? "..." : "")
+          : c.title
         return {
           ...c,
+          title: newTitle,
           messages: msgs,
           updatedAt: now,
           messageCount: msgs.length,
@@ -275,14 +302,6 @@ export default function AIAssistantUI() {
     setThinkingConvId(null)
   }
 
-  function handleUseTemplate(template) {
-    // This will be passed down to the Composer component
-    // The Composer will handle inserting the template content
-    if (composerRef.current) {
-      composerRef.current.insertTemplate(template.content)
-    }
-  }
-
   const composerRef = useRef(null)
 
   const selected = conversations.find((c) => c.id === selectedId) || null
@@ -319,20 +338,13 @@ export default function AIAssistantUI() {
           setSidebarCollapsed={setSidebarCollapsed}
           conversations={conversations}
           pinned={pinned}
-          recent={recent}
-          folders={folders}
-          folderCounts={folderCounts}
           selectedId={selectedId}
           onSelect={(id) => setSelectedId(id)}
           togglePin={togglePin}
           query={query}
           setQuery={setQuery}
           searchRef={searchRef}
-          createFolder={createFolder}
           createNewChat={createNewChat}
-          templates={templates}
-          setTemplates={setTemplates}
-          onUseTemplate={handleUseTemplate}
         />
 
         <main className="relative flex min-w-0 flex-1 flex-col">
