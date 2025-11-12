@@ -3,8 +3,8 @@
 A full-stack AI-powered chatbot application for medical clinic FAQs, built with **Retrieval-Augmented Generation (RAG)** using LangChain, Pinecone, and Groq LLM.
 
 **Two deployment options:**
-- 🚀 **Flask App** (Production) - Unified single-container application with built-in UI
-- 💻 **Next.js + FastAPI** (Development) - Full-featured development setup
+- 🚀 **Flask App** (Production) 
+- 💻 **Next.js + FastAPI** (Development)
 
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![Flask](https://img.shields.io/badge/flask-3.0+-green.svg)
