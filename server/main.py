@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from middlewares.exception_handlers import catch_exceptions_middleware
 from routes.ask_question import router as ask_router
 from routes.groq_stream import router as groq_stream_router
+from config import settings
 
 app=FastAPI(
     title="Clinic FAQ Chatbot API",
@@ -10,11 +11,11 @@ app=FastAPI(
     version="1.0.0"
 )
 
-# CORS Setup
+# CORS Setup with configured origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=["*"],
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )

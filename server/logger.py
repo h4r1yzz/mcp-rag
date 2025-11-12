@@ -15,9 +15,3 @@ def setup_logger(name="Assistant"):
     return logger
 
 logger = setup_logger()
-
-logger.info("Rag Processor is starting...")
-logger.debug("Debugging.")
-logger.error("An error occurred.")
-logger.critical("Critical error! The system is down!")
-
