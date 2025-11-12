@@ -27,7 +27,6 @@ class Settings(BaseSettings):
     LLM_MODEL: str = "llama-3.3-70b-versatile"
     
     # Application Configuration
-    UPLOAD_DIR: str = "./uploaded.docs"
     CHUNK_SIZE: int = 500
     CHUNK_OVERLAP: int = 100
     

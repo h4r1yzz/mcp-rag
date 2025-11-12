@@ -1,33 +1,13 @@
 "use client"
 import { useState } from "react"
-import { Paperclip, Bot, Search, Palette, BookOpen, MoreHorizontal, Globe, ChevronRight } from "lucide-react"
+import { Bot, Search, Palette, BookOpen, MoreHorizontal, Globe, ChevronRight } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
-import { uploadPdfs } from "../lib/api"
 
 export default function ComposerActionsPopover({ children }) {
   const [open, setOpen] = useState(false)
   const [showMore, setShowMore] = useState(false)
-  const inputId = "file-input-hidden"
-
-  async function handleUpload(files) {
-    try {
-      if (!files || files.length === 0) return
-      await uploadPdfs(files)
-      alert("Files uploaded and processed")
-    } catch (e) {
-      alert(`Upload failed: ${e instanceof Error ? e.message : e}`)
-    }
-  }
 
   const mainActions = [
-    {
-      icon: Paperclip,
-      label: "Add photos & files",
-      action: () => {
-        const el = document.getElementById(inputId)
-        if (el) el.click()
-      },
-    },
     {
       icon: Bot,
       label: "Agent mode",
@@ -112,19 +92,6 @@ export default function ComposerActionsPopover({ children }) {
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="start" side="top">
-        <input
-          id={inputId}
-          type="file"
-          multiple
-          accept="application/pdf"
-          className="hidden"
-          onChange={(e) => {
-            const files = e.target.files
-            handleUpload(files)
-            e.currentTarget.value = ""
-            setOpen(false)
-          }}
-        />
         {!showMore ? (
           // Main actions view
           <div className="p-3">

@@ -27,16 +27,6 @@ export async function askQuestion(question: string): Promise<AskResponse> {
   return handleJson<AskResponse>(res)
 }
 
-export async function uploadPdfs(files: File[] | FileList): Promise<{ messages: string }> {
-  const fd = new FormData()
-  const arr = Array.from(files as any)
-  if (arr.length === 0) throw new Error("No files selected")
-  for (const f of arr) fd.append("files", f)
-  const res = await fetch(`${API_BASE}/upload_pdfs/`, { method: "POST", body: fd })
-  return handleJson<{ messages: string }>(res)
-}
-
-
 export async function streamGroq(
   question: string,
   onToken: (chunk: string) => void,
