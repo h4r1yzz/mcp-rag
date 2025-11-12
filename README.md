@@ -20,7 +20,6 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 - [Project Structure](#-project-structure)
 - [API Documentation](#-api-documentation)
 - [Knowledge Base](#-knowledge-base)
-- [Testing](#-testing)
 - [Troubleshooting](#-troubleshooting)
 
 ---
