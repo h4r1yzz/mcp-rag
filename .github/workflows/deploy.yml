@@ -1,0 +1,243 @@
+name: Deploy MCP RAG Chatbot to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  AWS_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPO }}
+
+jobs:
+  # ============================================
+  # Build and Push Backend Image to ECR
+  # ============================================
+  build-backend:
+    name: Build & Push Backend Image
+    runs-on: ubuntu-latest
+    
+    outputs:
+      backend-image: ${{ steps.build-backend-image.outputs.image }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push backend image to Amazon ECR
+        id: build-backend-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build backend image with 'backend' tag
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG -f Dockerfile .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:backend-latest
+
+          # Push both tags
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-latest
+
+          # Output image URI
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ Backend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG"
+
+  # ============================================
+  # Build and Push Frontend Image to ECR
+  # ============================================
+  build-frontend:
+    name: Build & Push Frontend Image
+    runs-on: ubuntu-latest
+    
+    outputs:
+      frontend-image: ${{ steps.build-frontend-image.outputs.image }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push frontend image to Amazon ECR
+        id: build-frontend-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build frontend image with 'frontend' tag
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG -f client/mcp_rag/Dockerfile client/mcp_rag
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:frontend-latest
+
+          # Push both tags
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-latest
+
+          # Output image URI
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ Frontend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG"
+
+  # ============================================
+  # Deploy to EC2 using Docker Compose
+  # ============================================
+  deploy:
+    name: Deploy to EC2
+    needs: [build-backend, build-frontend]
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Stop existing containers
+        run: |
+          docker-compose down || true
+          docker container prune -f
+
+      - name: Create .env file with secrets
+        run: |
+          cat > .env << EOF
+          # API Keys
+          GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+          PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}
+          
+          # Pinecone Configuration
+          PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }}
+          PINECONE_ENV=${{ secrets.PINECONE_ENV }}
+          
+          # Clerk Authentication (Optional)
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
+          
+          # Model Configuration (Optional - using defaults if not set)
+          EMBEDDING_MODEL=${{ secrets.EMBEDDING_MODEL }}
+          EMBEDDING_DIMENSION=${{ secrets.EMBEDDING_DIMENSION }}
+          LLM_MODEL=${{ secrets.LLM_MODEL }}
+          CHUNK_SIZE=${{ secrets.CHUNK_SIZE }}
+          CHUNK_OVERLAP=${{ secrets.CHUNK_OVERLAP }}
+          
+          # ECR Image URIs
+          BACKEND_IMAGE=${{ needs.build-backend.outputs.backend-image }}
+          FRONTEND_IMAGE=${{ needs.build-frontend.outputs.frontend-image }}
+          EOF
+
+      - name: Create docker-compose.prod.yml
+        run: |
+          cat > docker-compose.prod.yml << 'EOF'
+          version: '3.8'
+
+          services:
+            backend:
+              image: ${BACKEND_IMAGE}
+              container_name: mcp-rag-backend
+              ports:
+                - "8000:8000"
+              environment:
+                - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+                - GROQ_API_KEY=${GROQ_API_KEY}
+                - PINECONE_API_KEY=${PINECONE_API_KEY}
+                - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME:-clinic-faqs}
+                - PINECONE_ENV=${PINECONE_ENV:-us-east-1}
+                - EMBEDDING_MODEL=${EMBEDDING_MODEL:-models/embedding-001}
+                - EMBEDDING_DIMENSION=${EMBEDDING_DIMENSION:-768}
+                - LLM_MODEL=${LLM_MODEL:-llama-3.3-70b-versatile}
+                - CHUNK_SIZE=${CHUNK_SIZE:-500}
+                - CHUNK_OVERLAP=${CHUNK_OVERLAP:-100}
+                - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:8000"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 10s
+              networks:
+                - mcp-rag-network
+
+            frontend:
+              image: ${FRONTEND_IMAGE}
+              container_name: mcp-rag-frontend
+              ports:
+                - "3000:3000"
+              environment:
+                - NEXT_PUBLIC_API_BASE=http://localhost:8000
+                - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+                - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+              depends_on:
+                backend:
+                  condition: service_healthy
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:3000"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 10s
+              networks:
+                - mcp-rag-network
+
+          networks:
+            mcp-rag-network:
+              driver: bridge
+          EOF
+
+      - name: Pull images from ECR
+        run: |
+          docker pull ${{ needs.build-backend.outputs.backend-image }}
+          docker pull ${{ needs.build-frontend.outputs.frontend-image }}
+
+      - name: Deploy with Docker Compose
+        run: |
+          docker-compose -f docker-compose.prod.yml up -d
+          echo "✅ Deployment complete!"
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for services to be healthy..."
+          sleep 10
+          
+          # Check backend health
+          curl -f http://localhost:8000 || echo "⚠️ Backend health check failed"
+          
+          # Check frontend health
+          curl -f http://localhost:3000 || echo "⚠️ Frontend health check failed"
+          
+          # Show running containers
+          docker-compose -f docker-compose.prod.yml ps
+
+      - name: Cleanup old images
+        run: |
+          docker image prune -af --filter "until=72h"
+          echo "✅ Cleaned up old Docker images"
+
