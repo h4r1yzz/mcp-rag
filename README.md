@@ -40,22 +40,14 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 - 🛡️ **Robust Error Handling** - Comprehensive exception handling and logging
 - ⚡ **Optimized Performance** - Singleton services, connection pooling, and caching
 
-### Flask App (Production - Recommended)
-- 🎯 **Single Container Deployment** - Unified application serving both UI and API
-- 💬 **Chat Mode** - Conversational AI with context memory
-- ⚡ **Real-time Streaming** - Server-Sent Events (SSE) for live responses
-- 🎨 **Modern UI** - Clean, responsive chat interface with gradient design
-- 🐳 **Docker Ready** - Simple deployment with single Docker container
-- 🚀 **CI/CD Integrated** - GitHub Actions workflow for automated deployment
-
-### Next.js + FastAPI (Development - Optional)
+### ( Flask App ) or ( Next.js + FastAPI  ) 
 - 💬 **Multi-Conversation Management** - Create, switch, and manage multiple chat conversations
 - 📌 **Pin Important Chats** - Pin frequently used conversations for quick access
 - 🔄 **Auto-Save Conversations** - Automatic persistence to localStorage
 - 🎨 **Modern UI/UX** - Clean, responsive design with dark/light theme support
 - ⚡ **Real-time Streaming** - Live streaming of AI responses with typing indicators
-- 🔐 **Authentication** - Clerk integration for user authentication
-- 🔍 **Search Functionality** - Search through conversation history
+- � **Authentication** - Clerk integration for user authentication
+- �🔍 **Search Functionality** - Search through conversation history
 
 ---
 
@@ -78,7 +70,7 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 
 ## 🏗️ Architecture
 
-### Production (Flask App - Single Container)
+### Production (Flask App)
 ```
 ┌─────────────────────────────┐
 │      Flask Application      │
@@ -149,7 +141,6 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4
 - **Animations:** Framer Motion
-- **Authentication:** Clerk
 - **Icons:** Lucide React
 - **HTTP Client:** Fetch API with SSE support
 
@@ -162,7 +153,7 @@ Before you begin, ensure you have the following installed:
 ### Required Software
 - **Python:** 3.11 or higher ([Download](https://www.python.org/downloads/))
 - **Node.js:** 18.0 or higher ([Download](https://nodejs.org/))
-- **npm/pnpm:** Latest version (pnpm recommended)
+- **pnpm:** Latest version 
 - **Git:** For cloning the repository
 
 ### Required API Keys
@@ -193,7 +184,7 @@ You'll need to sign up for the following services (all have free tiers):
 
 ```bash
 git clone https://github.com/yourusername/mcp-rag-chatbot.git
-cd mcp-rag-chatbot
+cd mcp-rag
 ```
 
 ### 2. Backend Setup
