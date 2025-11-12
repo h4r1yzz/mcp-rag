@@ -7,7 +7,6 @@ on:
 
 env:
   AWS_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-  ECR_REPOSITORY: ${{ secrets.ECR_REPO }}
 
 jobs:
   # ============================================
@@ -39,19 +38,20 @@ jobs:
         id: build-backend-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPO: ${{ secrets.ECR_REPO }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build backend image with 'backend' tag
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG -f Dockerfile .
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:backend-latest
+          docker build -t $ECR_REGISTRY/$ECR_REPO:backend-$IMAGE_TAG -f Dockerfile .
+          docker tag $ECR_REGISTRY/$ECR_REPO:backend-$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:backend-latest
 
           # Push both tags
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-latest
+          docker push $ECR_REGISTRY/$ECR_REPO:backend-$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO:backend-latest
 
           # Output image URI
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG" >> $GITHUB_OUTPUT
-          echo "✅ Backend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG"
+          echo "image=$ECR_REGISTRY/$ECR_REPO:backend-$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ Backend image pushed: $ECR_REGISTRY/$ECR_REPO:backend-$IMAGE_TAG"
 
   # ============================================
   # Build and Push Frontend Image to ECR
@@ -82,19 +82,20 @@ jobs:
         id: build-frontend-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPO: ${{ secrets.ECR_REPO }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build frontend image with 'frontend' tag
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG -f client/mcp_rag/Dockerfile client/mcp_rag
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:frontend-latest
+          docker build -t $ECR_REGISTRY/$ECR_REPO:frontend-$IMAGE_TAG -f client/mcp_rag/Dockerfile client/mcp_rag
+          docker tag $ECR_REGISTRY/$ECR_REPO:frontend-$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:frontend-latest
 
           # Push both tags
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-latest
+          docker push $ECR_REGISTRY/$ECR_REPO:frontend-$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO:frontend-latest
 
           # Output image URI
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG" >> $GITHUB_OUTPUT
-          echo "✅ Frontend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG"
+          echo "image=$ECR_REGISTRY/$ECR_REPO:frontend-$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ Frontend image pushed: $ECR_REGISTRY/$ECR_REPO:frontend-$IMAGE_TAG"
 
   # ============================================
   # Deploy to EC2 using Docker Compose
@@ -207,9 +208,15 @@ jobs:
           EOF
 
       - name: Pull images from ECR
+        env:
+          BACKEND_IMAGE: ${{ needs.build-backend.outputs.backend-image }}
+          FRONTEND_IMAGE: ${{ needs.build-frontend.outputs.frontend-image }}
         run: |
-          docker pull ${{ needs.build-backend.outputs.backend-image }}
-          docker pull ${{ needs.build-frontend.outputs.frontend-image }}
+          echo "Pulling backend image: $BACKEND_IMAGE"
+          docker pull $BACKEND_IMAGE
+
+          echo "Pulling frontend image: $FRONTEND_IMAGE"
+          docker pull $FRONTEND_IMAGE
 
       - name: Deploy with Docker Compose
         run: |
