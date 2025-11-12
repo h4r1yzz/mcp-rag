@@ -171,6 +171,9 @@ def internal_error(error):
 
 
 if __name__ == '__main__':
-    # Run on port 3000 for local development (8080 in production via gunicorn)
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    import os
+    # Use port 8080 in production (Docker), 3000 for local development
+    port = int(os.environ.get('PORT', 3000))
+    debug = os.environ.get('FLASK_ENV') != 'production'
+    app.run(host='0.0.0.0', port=port, debug=debug)
 
