@@ -7,14 +7,16 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") || "http:/
 
 async function handleJson<T>(res: Response): Promise<T> {
   const text = await res.text()
-  let data: any
+  let data: unknown
   try {
     data = text ? JSON.parse(text) : {}
   } catch {
     throw new Error(`Invalid JSON from API: ${text?.slice(0, 200)}`)
   }
   if (!res.ok) {
-    const message = (data && (data.error || data.detail)) || res.statusText
+    const message = (data && typeof data === "object" && data !== null && ("error" in data || "detail" in data)
+      ? (data as { error?: string; detail?: string }).error || (data as { error?: string; detail?: string }).detail
+      : undefined) || res.statusText
     throw new Error(typeof message === "string" ? message : JSON.stringify(message))
   }
   return data as T
