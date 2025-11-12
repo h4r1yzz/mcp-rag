@@ -5,7 +5,6 @@ All environment variables and application settings are defined here.
 
 from pydantic_settings import BaseSettings
 from functools import lru_cache
-from typing import List
 from pathlib import Path
 
 
@@ -29,9 +28,6 @@ class Settings(BaseSettings):
     # Application Configuration
     CHUNK_SIZE: int = 500
     CHUNK_OVERLAP: int = 100
-    
-    # CORS Configuration
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
     
     class Config:
         # Look for .env in server directory
