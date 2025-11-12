@@ -2,7 +2,6 @@
 
 A full-stack AI-powered chatbot application for medical clinic FAQs, built with **Retrieval-Augmented Generation (RAG)** using LangChain, Pinecone, and Groq LLM. Features a modern Next.js frontend with real-time streaming responses and conversation management.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![Node](https://img.shields.io/badge/node-18+-green.svg)
 
@@ -23,8 +22,6 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 - [Knowledge Base](#-knowledge-base)
 - [Testing](#-testing)
 - [Troubleshooting](#-troubleshooting)
-- [Contributing](#-contributing)
-- [License](#-license)
 
 ---
 
@@ -44,7 +41,6 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 - 🎨 **Modern UI/UX** - Clean, responsive design with dark/light theme support
 - ⚡ **Real-time Streaming** - Live streaming of AI responses with typing indicators
 - 🔐 **Authentication** - Clerk integration for user authentication
-- 📱 **Mobile Responsive** - Fully responsive design for all devices
 - 🔍 **Search Functionality** - Search through conversation history
 
 ---
