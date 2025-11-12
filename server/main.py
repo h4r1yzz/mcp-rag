@@ -1,13 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from middlewares.exception_handlers import catch_exceptions_middleware
-from routes.upload_pdfs import router as upload_router
 from routes.ask_question import router as ask_router
 from routes.groq_stream import router as groq_stream_router
 
-
-
-app=FastAPI(title="Medical Assistant API",description="API for AI Medical Assistant Chatbot")
+app=FastAPI(
+    title="Clinic FAQ Chatbot API",
+    description="AI-powered chatbot for aesthetic clinic patient questions",
+    version="1.0.0"
+)
 
 # CORS Setup
 app.add_middleware(
@@ -25,9 +26,7 @@ app.middleware("http")(catch_exceptions_middleware)
 
 # routers
 
-# 1. upload pdfs documents
-app.include_router(upload_router)
-# 2. asking query
+# 1. FAQ question answering (RAG-based)
 app.include_router(ask_router)
-# 3. groq streaming
+# 2. Streaming chat (conversational)
 app.include_router(groq_stream_router)

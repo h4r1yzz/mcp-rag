@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Form
 from fastapi.responses import StreamingResponse
 from logger import logger
@@ -62,9 +63,9 @@ async def groq_stream(
                 if thread_id not in conversation_memory:
                     # Initialize with system message
                     conversation_memory[thread_id] = [
-                        SystemMessage(content="You are a helpful assistant.")
+                        SystemMessage(content="You are ClinicBot, a friendly and professional AI assistant for an aesthetic clinic. Help patients with questions about services, policies, and general clinic information in a warm and welcoming manner.")
                     ]
-                
+
                 messages = list(conversation_memory[thread_id])
             
             # Add the new user message
@@ -81,10 +82,6 @@ async def groq_stream(
             
             # Add both user message and AI response
             with memory_lock:
-                if thread_id not in conversation_memory:
-                    conversation_memory[thread_id] = [
-                        SystemMessage(content="You are a helpful assistant.")
-                    ]
                 conversation_memory[thread_id].append(HumanMessage(content=question))
                 conversation_memory[thread_id].append(AIMessage(content=full_response))
             

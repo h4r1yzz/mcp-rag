@@ -1,0 +1,75 @@
+{
+  "faqs": [
+    {
+      "id": "faq_001",
+      "question": "What are your operating hours?",
+      "answer": "Our clinic is open Monday through Friday from 9:00 AM to 7:00 PM, and Saturdays from 10:00 AM to 4:00 PM. We are closed on Sundays and major holidays. For after-hours emergencies, please contact our 24/7 hotline at (555) 123-4567.",
+      "category": "General Information",
+      "tags": ["hours", "schedule", "availability"]
+    },
+    {
+      "id": "faq_002",
+      "question": "Do you accept walk-ins or do I need an appointment?",
+      "answer": "While we do accept walk-ins based on availability, we highly recommend scheduling an appointment to ensure minimal wait time and guarantee availability with your preferred specialist. You can book appointments online through our website, via phone at (555) 123-4567, or through our mobile app.",
+      "category": "Appointments",
+      "tags": ["walk-in", "appointment", "booking", "scheduling"]
+    },
+    {
+      "id": "faq_003",
+      "question": "What payment methods do you accept?",
+      "answer": "We accept all major credit cards (Visa, MasterCard, American Express, Discover), debit cards, cash, and digital payment methods including Apple Pay and Google Pay. We also offer flexible financing options through CareCredit and Affirm for treatments over $500. Payment is due at the time of service unless prior arrangements have been made.",
+      "category": "Billing & Payment",
+      "tags": ["payment", "credit card", "financing", "insurance"]
+    },
+    {
+      "id": "faq_004",
+      "question": "Is there parking available at your clinic?",
+      "answer": "Yes, we offer complimentary parking for all our patients. Our clinic has a dedicated parking lot with 25 spaces located directly behind the building. Additional street parking is also available. For patients with mobility concerns, we have two designated accessible parking spots near the main entrance. Valet service is available upon request for premium treatment packages.",
+      "category": "Facilities",
+      "tags": ["parking", "location", "accessibility", "facilities"]
+    },
+    {
+      "id": "faq_005",
+      "question": "What is the recovery time for laser hair removal?",
+      "answer": "Laser hair removal has minimal downtime. Most patients can return to their normal activities immediately after treatment. You may experience mild redness and slight swelling in the treated area for 24-48 hours, similar to a mild sunburn. We recommend avoiding direct sun exposure, hot showers, and strenuous exercise for 24 hours post-treatment. Full results typically appear after 6-8 sessions spaced 4-6 weeks apart.",
+      "category": "Laser Hair Removal",
+      "tags": ["laser hair removal", "recovery", "downtime", "treatment", "side effects"]
+    },
+    {
+      "id": "faq_006",
+      "question": "How much does Botox cost and how long does it last?",
+      "answer": "Botox pricing varies based on the treatment area and number of units required. On average, treatments range from $300-$600 per session. Common areas include forehead lines (10-30 units), crow's feet (5-15 units per side), and frown lines (10-25 units). Results typically last 3-4 months, with some patients experiencing effects up to 6 months. We offer a free consultation to provide a personalized quote based on your specific needs and aesthetic goals.",
+      "category": "Botox & Injectables",
+      "tags": ["botox", "pricing", "cost", "duration", "injectables", "consultation"]
+    },
+    {
+      "id": "faq_007",
+      "question": "Are your treatments safe? What certifications do your practitioners have?",
+      "answer": "Patient safety is our top priority. All our practitioners are board-certified and extensively trained in aesthetic procedures. Our medical director is a board-certified dermatologist with over 15 years of experience. Our nurses and aestheticians hold state licenses and certifications from recognized institutions including the American Academy of Aesthetic Medicine. We use only FDA-approved equipment and products, and our facility is regularly inspected and accredited by state health authorities.",
+      "category": "Safety & Credentials",
+      "tags": ["safety", "certification", "qualifications", "licensed", "FDA", "board-certified"]
+    },
+    {
+      "id": "faq_008",
+      "question": "Do you offer free consultations?",
+      "answer": "Yes! We offer complimentary 30-minute consultations for all new patients. During your consultation, you'll meet with one of our aesthetic specialists who will assess your concerns, discuss treatment options, explain expected results, and provide a customized treatment plan with transparent pricing. There's no obligation to book a treatment. You can schedule your free consultation online, by phone, or by visiting our clinic during business hours.",
+      "category": "Consultations",
+      "tags": ["consultation", "free", "assessment", "new patient", "evaluation"]
+    },
+    {
+      "id": "faq_009",
+      "question": "What should I do to prepare for my first visit?",
+      "answer": "For your first visit, please arrive 15 minutes early to complete our patient intake forms. Bring a valid ID, insurance card (if applicable), and a list of any medications or supplements you're currently taking. Avoid wearing makeup if you're having a facial treatment or skin assessment. For body treatments, wear comfortable, loose-fitting clothing. If you have specific concerns or photos of desired results, please bring them to discuss during your consultation. Don't hesitate to write down any questions you'd like to ask our specialists.",
+      "category": "First Visit",
+      "tags": ["preparation", "first visit", "new patient", "intake", "what to bring"]
+    },
+    {
+      "id": "faq_010",
+      "question": "What is your cancellation policy?",
+      "answer": "We understand that schedules change. We require at least 24 hours notice for appointment cancellations or rescheduling. Cancellations made with less than 24 hours notice or no-shows may be subject to a $50 cancellation fee. This fee helps us manage our schedule and serve other patients. For treatments requiring deposits, cancellations made less than 48 hours in advance will forfeit the deposit. You can cancel or reschedule easily through our online portal, mobile app, or by calling our office.",
+      "category": "Policies",
+      "tags": ["cancellation", "policy", "rescheduling", "no-show", "deposit"]
+    }
+  ]
+}
+

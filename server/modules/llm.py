@@ -1,7 +1,7 @@
-from langchain.agents import create_agent
-from langchain.tools import tool
 from langchain_groq import ChatGroq
 from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import SystemMessage, HumanMessage
 from typing import List
 import os
 from dotenv import load_dotenv
@@ -10,66 +10,82 @@ load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-def create_retrieval_tool(retriever):
-    """Create a retrieval tool for the agent to use."""
-    
-    # Create a closure that captures the retriever
-    def retrieve_documents(query: str):
-        """Retrieve documents using the retriever."""
-        return retriever.invoke(query)
-    
-    @tool(response_format="content_and_artifact")
-    def retrieve_context(query: str):
-        """Retrieve information from medical documents to help answer a query.
-        
-        Use this tool when you need to search for information in the medical documents.
-        The tool will return relevant context from the documents.
-        """
-        # Retrieve documents using the retriever
-        retrieved_docs = retrieve_documents(query)
-        
-        # Serialize the documents for the model
-        serialized = "\n\n".join(
-            (f"Source: {doc.metadata.get('source', doc.metadata.get('sources', 'Unknown'))}\nContent: {doc.page_content}")
-            for doc in retrieved_docs
-        )
-        
-        return serialized, retrieved_docs
-    
-    return retrieve_context
-
 
 def get_llm_agent(retriever):
-    """Create an agent with retrieval capabilities using createAgent."""
-    
+    """Create a simple RAG chain with retriever."""
+
     llm = ChatGroq(
         groq_api_key=GROQ_API_KEY,
-        model_name="llama-3.3-70b-versatile"
+        model_name="llama-3.3-70b-versatile",
+        temperature=0.1  # Lower temperature for more deterministic, grounded responses
     )
 
-    # Create the retrieval tool
-    retrieval_tool = create_retrieval_tool(retriever)
-    
-    # System prompt for the agent
-    system_prompt = """You are **MediBot**, an AI-powered assistant trained to help users understand medical documents and health-related questions.
+    # System prompt for the chatbot
+    system_prompt = """You are **ClinicBot**, a friendly and professional AI assistant for an aesthetic clinic.
 
-Your job is to provide clear, accurate, and helpful responses based **only on the retrieved context**.
+Your job is to help patients and potential clients by answering questions about clinic services, policies, procedures, and general information based STRICTLY on the provided context from our FAQ knowledge base.
 
-Instructions:
-- Use the retrieve_context tool to search for information when answering questions.
-- Respond in a calm, factual, and respectful tone.
-- Use simple explanations when needed.
-- If the retrieved context does not contain the answer, say: "I'm sorry, but I couldn't find relevant information in the provided documents."
-- Do NOT make up facts.
-- Do NOT give medical advice or diagnoses.
-- Always cite your sources when providing information.
+CRITICAL INSTRUCTIONS:
+- You MUST provide responses based ONLY on the exact information in the context provided.
+- NEVER omit important details from the context, especially regarding operating hours, closures, or limitations.
+- When answering questions about operating hours or schedule, you MUST include ALL information from the context including:
+  * Days and times the clinic is OPEN
+  * Days the clinic is CLOSED (e.g., Sundays, holidays)
+  * Any emergency contact information
+- Provide COMPLETE and ACCURATE responses - do not summarize or leave out critical details.
+- Maintain a warm, professional, and welcoming tone appropriate for a healthcare setting.
+- If the context doesn't contain information to answer the question, politely say: "I don't have that specific information in our FAQ database. I recommend calling our clinic at (555) 123-4567 or scheduling a free consultation for personalized assistance."
+- Do NOT make up information or provide answers not supported by the context.
+- Do NOT provide medical diagnoses or personalized medical advice.
+- When discussing treatments, always mention that results may vary and recommend a consultation.
+- Be thorough in your responses - include all relevant details from the context.
+- If relevant, suggest booking a free consultation for more detailed information.
 """
 
-    # Create the agent with the retrieval tool
-    agent = create_agent(
-        model=llm,
-        tools=[retrieval_tool],
-        system_prompt=system_prompt
-    )
+    # Return a simple object that has the retriever and LLM
+    class SimpleRAGAgent:
+        def __init__(self, llm, retriever, system_prompt):
+            self.llm = llm
+            self.retriever = retriever
+            self.system_prompt = system_prompt
 
-    return agent
+        def invoke(self, inputs):
+            # Extract the user question
+            messages = inputs.get("messages", [])
+            if not messages:
+                return {"messages": []}
+
+            user_message = messages[-1]
+            user_question = user_message.content if hasattr(user_message, 'content') else str(user_message)
+
+            # Retrieve relevant documents
+            retrieved_docs = self.retriever.invoke(user_question)
+
+            # Format context from retrieved documents
+            context = "\n\n".join([
+                f"FAQ Category: {doc.metadata.get('category', 'General')}\n{doc.page_content}"
+                for doc in retrieved_docs
+            ])
+
+            # Create the prompt with context
+            prompt_messages = [
+                SystemMessage(content=self.system_prompt),
+                HumanMessage(content=f"""Context from FAQ knowledge base:
+
+{context}
+
+User Question: {user_question}
+
+IMPORTANT: Answer the question using ONLY the information provided in the context above. Include ALL relevant details from the context - do not omit any important information. If the context mentions what days the clinic is closed, you MUST include that in your response.""")
+            ]
+
+            # Get response from LLM
+            response = self.llm.invoke(prompt_messages)
+
+            # Return in the expected format with sources
+            return {
+                "messages": messages + [response],
+                "retrieved_docs": retrieved_docs
+            }
+
+    return SimpleRAGAgent(llm, retriever, system_prompt)
