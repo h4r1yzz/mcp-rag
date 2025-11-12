@@ -1,7 +1,8 @@
 # Web Framework
-fastapi
-uvicorn[standard]
-python-multipart  # for file uploads
+flask>=3.0.0
+flask-cors>=4.0.0
+python-multipart>=0.0.6
+gunicorn>=21.0.0
 
 # LangChain & Ecosystem
 langchain

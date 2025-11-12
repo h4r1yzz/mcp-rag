@@ -13,8 +13,10 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY server/requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Upgrade pip and install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip list | grep -E "flask|gunicorn"
 
 # Copy server code
 COPY server/ .
