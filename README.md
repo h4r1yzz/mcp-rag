@@ -19,6 +19,7 @@ Deploy Link: (http://52.91.160.51:8080/)
 - [Features](#-features)
 - [Demo](#-demo)
 - [Architecture](#-architecture)
+- [Architecture Decision: Why Flask?](#-architecture-decision-why-flask)
 - [Technology Stack](#-technology-stack)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
@@ -126,6 +127,55 @@ Deploy Link: (http://52.91.160.51:8080/)
 3. Top-K relevant FAQ chunks retrieved
 4. Context + Query sent to Groq LLM (Llama 3.3 70B)
 5. Streaming response back to frontend
+
+---
+
+## 🎯 Architecture Decision: Why Flask?
+
+### Prioritizing Rapid Delivery and Simplicity
+
+This project was initially developed with a **Next.js + FastAPI** architecture, offering a modern, decoupled frontend-backend setup. However, after evaluating the project requirements and deployment goals, **Flask was chosen as the primary production deployment option**.
+
+### Key Reasons for This Decision
+
+**1. Focus on Core Functionality**
+- The primary goal was to deliver a working RAG chatbot quickly and efficiently
+- Flask's monolithic architecture allowed faster iteration and deployment
+- Reduced complexity meant more time spent on RAG quality, prompt engineering, and user experience
+
+**2. Simplified Deployment & Operations**
+- **Single container deployment** - One Docker image instead of coordinating multiple services
+- **Reduced infrastructure complexity** - No need to manage separate frontend/backend services
+- **Lower operational overhead** - Easier monitoring, logging, and debugging
+- **Faster CI/CD pipeline** - Single build and deployment process
+
+**3. Appropriate for Project Scale**
+- For a medical clinic FAQ chatbot, Flask's capabilities are more than sufficient
+- Server-side rendering with Jinja2 templates provides excellent performance
+- No need for complex client-side state management or routing
+
+**4. Development Efficiency**
+- Flask's simplicity allowed rapid prototyping and feature development
+- Fewer moving parts meant faster debugging and iteration cycles
+- Single codebase for both UI and API reduced context switching
+
+### Next.js + FastAPI: Still Available for Development
+
+The **Next.js + FastAPI** setup remains in the codebase as an **optional development path** but only able to run locally:
+- Modern React-based UI development
+- Decoupled frontend/backend architecture
+- TypeScript and Tailwind CSS workflow
+- Advanced client-side features
+
+### The Pragmatic Engineering Approach
+
+This decision reflects a **pragmatic engineering philosophy**:
+- ✅ Ship working software quickly
+- ✅ Choose the simplest solution that meets requirements
+- ✅ Optimize for maintainability and operational simplicity
+- ✅ Avoid over-engineering for hypothetical future needs
+
+The Flask-based architecture delivers all core features—RAG retrieval, streaming responses, conversation management, and a clean UI—while maintaining simplicity and ease of deployment.
 
 ---
 
