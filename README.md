@@ -54,7 +54,13 @@ Deploy Link: (http://52.91.160.51:8080/)
 
 ## 🎥 Demo
 
-### Chat Interface
+### Flask App Interface (Production)
+![Flask Chat Interface](./Flask-frontend.png)
+
+### Next.js + FastAPI Interface (Development)
+![Next.js Chat Interface](./Nextjs-frontend.png)
+
+### Chat Interface Features
 - Auto-created chat on first load
 - Real-time streaming responses
 - Conversation history in sidebar
