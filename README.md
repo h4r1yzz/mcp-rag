@@ -46,7 +46,6 @@ A full-stack AI-powered chatbot application for medical clinic FAQs, built with 
 - 🔄 **Auto-Save Conversations** - Automatic persistence to localStorage
 - 🎨 **Modern UI/UX** - Clean, responsive design with dark/light theme support
 - ⚡ **Real-time Streaming** - Live streaming of AI responses with typing indicators
-- � **Authentication** - Clerk integration for user authentication
 - �🔍 **Search Functionality** - Search through conversation history
 
 ---
@@ -575,7 +574,7 @@ This ensures:
 **Solution:**
 ```bash
 cd server
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
 #### 2. "GOOGLE_API_KEY not found"
