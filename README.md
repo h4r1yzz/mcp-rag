@@ -2,6 +2,8 @@
 
 A full-stack AI-powered chatbot application for medical clinic FAQs, built with **Retrieval-Augmented Generation (RAG)** using LangChain, Pinecone, and Groq LLM.
 
+Deploy Link: (http://52.91.160.51:8080/)
+
 **Two deployment options:**
 - 🚀 **Flask App** (Production) 
 - 💻 **Next.js + FastAPI** (Development)
